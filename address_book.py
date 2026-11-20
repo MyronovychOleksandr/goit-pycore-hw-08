@@ -24,7 +24,10 @@ class Field:
 
 
 class Name(Field):
-    pass
+    def __init__(self, value):
+        if not value or not value.strip():
+            raise ValidationError("Name cannot be empty.")
+        super().__init__(value.strip())
 
 
 class Phone(Field):
@@ -56,11 +59,11 @@ class Record:
         self.phones.append(Phone(phone))
 
     def edit_phone(self, old_phone, new_phone):
-        for i, phone in enumerate(self.phones):
-            if phone.value == old_phone:
-                self.phones[i] = Phone(new_phone)
-                return
-        raise ValidationError(f"Phone {old_phone} not found")
+        found = self.find_phone(old_phone)
+        if found is None:
+            raise ValidationError(f"Phone {old_phone} not found")
+        index = self.phones.index(found)
+        self.phones[index] = Phone(new_phone)
 
     def remove_phone(self, phone):
         found = self.find_phone(phone)
@@ -113,14 +116,14 @@ class AddressBook(UserDict):
             if next_birthday < today:
                 next_birthday = _birthday_in_year(birthday, today.year + 1)
 
-            days_until = (next_birthday - today).days
-            if days_until >= DAYS_AHEAD:
-                continue
-
             congratulation_date = next_birthday
             weekday = congratulation_date.weekday()
             if weekday >= 5:
                 congratulation_date += timedelta(days=7 - weekday)
+
+            days_until = (congratulation_date - today).days
+            if days_until >= DAYS_AHEAD:
+                continue
 
             upcoming.append(
                 {

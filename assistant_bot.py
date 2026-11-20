@@ -28,9 +28,15 @@ def normalize_name(name: str) -> str:
     return name.capitalize()
 
 
+def check_args(args, count, usage):
+    if len(args) != count:
+        raise ValidationError(f"Invalid arguments. Usage: {usage}")
+
+
 @input_error
 def add_contact(args, book: AddressBook):
-    name, phone, *_ = args
+    check_args(args, 2, "add [name] [phone]")
+    name, phone = args
     name = normalize_name(name)
     record = book.find(name)
     message = "Contact updated."
@@ -40,14 +46,14 @@ def add_contact(args, book: AddressBook):
         record = Record(name)
         book.add_record(record)
         message = "Contact added."
-    if phone:
-        record.add_phone(phone)
+    record.add_phone(phone)
     return message
 
 
 @input_error
 def change_contact(args, book: AddressBook):
-    name, old_phone, new_phone, *_ = args
+    check_args(args, 3, "change [name] [old phone] [new phone]")
+    name, old_phone, new_phone = args
     name = normalize_name(name)
     record = book.find(name)
     if record is None:
@@ -59,8 +65,8 @@ def change_contact(args, book: AddressBook):
 
 @input_error
 def show_phone(args, book: AddressBook):
-    name = args[0]
-    name = normalize_name(name)
+    check_args(args, 1, "phone [name]")
+    name = normalize_name(args[0])
     record = book.find(name)
     if record is None:
         raise KeyError
@@ -74,6 +80,7 @@ def show_phone(args, book: AddressBook):
 
 @input_error
 def show_all(args, book: AddressBook):
+    check_args(args, 0, "all")
     if not book.data:
         return "No contacts saved."
     return "\n".join(str(record) for record in book.data.values())
@@ -81,7 +88,8 @@ def show_all(args, book: AddressBook):
 
 @input_error
 def add_birthday(args, book: AddressBook):
-    name, birthday, *_ = args
+    check_args(args, 2, "add-birthday [name] [DD.MM.YYYY]")
+    name, birthday = args
     name = normalize_name(name)
     record = book.find(name)
     if record is None:
@@ -92,8 +100,8 @@ def add_birthday(args, book: AddressBook):
 
 @input_error
 def show_birthday(args, book: AddressBook):
-    name = args[0]
-    name = normalize_name(name)
+    check_args(args, 1, "show-birthday [name]")
+    name = normalize_name(args[0])
     record = book.find(name)
     if record is None:
         raise KeyError
@@ -103,6 +111,7 @@ def show_birthday(args, book: AddressBook):
 
 @input_error
 def birthdays(args, book: AddressBook):
+    check_args(args, 0, "birthdays")
     if not book.data:
         return "No contacts saved."
     upcoming_birthdays = book.get_upcoming_birthdays()
