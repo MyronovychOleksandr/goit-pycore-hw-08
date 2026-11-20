@@ -1,5 +1,6 @@
 from functools import wraps
 from address_book import AddressBook, Record, Phone, ValidationError
+import pickle
 
 
 def input_error(func):
@@ -17,6 +18,18 @@ def input_error(func):
             return "Contact not found."
 
     return inner
+
+
+def save_data(book, filename="addressbook.pkl"):
+    with open(filename, "wb") as f:
+        pickle.dump(book, f)
+
+def load_data(filename="addressbook.pkl"):
+    try:
+        with open(filename, "rb") as f:
+            return pickle.load(f)
+    except (FileNotFoundError, EOFError, pickle.UnpicklingError):
+        return AddressBook() 
 
 
 def parse_input(user_input):
@@ -136,23 +149,28 @@ COMMANDS = {
 
 
 def main():
-    book = AddressBook()
+    book = load_data()
     print("Welcome to the assistant bot!")
-    while True:
-        user_input = input("Enter a command: ")
-        if not user_input.strip():
-            continue
-        command, *args = parse_input(user_input)
+    try:
+        while True:
+            user_input = input("Enter a command: ")
+            if not user_input.strip():
+                continue
+            command, *args = parse_input(user_input)
 
-        if command in ["close", "exit"]:
-            print("Good bye!")
-            break
-        elif command == "hello":
-            print("How can I help you?")
-        elif command in COMMANDS:
-            print(COMMANDS[command](args, book))
-        else:
-            print("Invalid command.")
+            if command in ["close", "exit"]:
+                print("Good bye!")
+                break
+            elif command == "hello":
+                print("How can I help you?")
+            elif command in COMMANDS:
+                print(COMMANDS[command](args, book))
+            else:
+                print("Invalid command.")
+    except (KeyboardInterrupt, EOFError):
+        print("\nGood bye!")
+    finally:
+        save_data(book)
 
 
 if __name__ == "__main__":
